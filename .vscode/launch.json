@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-BarbershopApplication<barbershop>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.barbershop.BarbershopApplication",
+            "projectName": "barbershop",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
