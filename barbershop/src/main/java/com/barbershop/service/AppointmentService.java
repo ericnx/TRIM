@@ -15,6 +15,8 @@ import com.barbershop.repository.SlotRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -27,6 +29,7 @@ public class AppointmentService {
     private final ClientRepository clientRepo;
     private final BarberServiceRepository serviceRepo;
     private final BarberRepository barberRepo;
+    private static final Logger log = LoggerFactory.getLogger(AppointmentService.class);
 
     public AppointmentService(AppointmentRepository appointmentRepo,
             SlotRepository slotRepo,
@@ -64,15 +67,19 @@ public class AppointmentService {
     @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
     public Appointment bookAppointment(Long clientId, Long serviceId, Long slotId) {
 
+        log.info("Booking attempt: clientId={}, serviceId={}, slotId={}", clientId, serviceId, slotId);
+
         Slot slot = slotRepo.findById(slotId)
                 .orElseThrow(() -> new IllegalArgumentException("Slot not found: " + slotId));
 
         if (slot.getStatus() != Slot.Status.AVAILABLE) {
+            log.warn("Slot {} is {}. Cannot book.", slotId, slot.getStatus());
             throw new IllegalStateException("Slot is no longer available.");
         }
 
         slot.setStatus(Slot.Status.BOOKED);
         slotRepo.save(slot);
+        log.info("Slot {} marked BOOKED (version={}).", slotId, slot.getVersion());
 
         Client client = clientRepo.findById(clientId)
                 .orElseThrow(() -> new IllegalArgumentException("Client not found: " + clientId));
@@ -80,8 +87,15 @@ public class AppointmentService {
         BarberService service = serviceRepo.findById(serviceId)
                 .orElseThrow(() -> new IllegalArgumentException("Service not found: " + serviceId));
 
-        return appointmentRepo.save(
+        Appointment appt = appointmentRepo.save(
                 new Appointment(client, service, slot.getSchedule(),
                         slot, Appointment.Status.PENDING, service.getPrice()));
+
+        log.info("Appointment saved: id={}, client={}, barber={}, slot={}",
+                appt.getAppointmentId(), client.getFullName(),
+                slot.getSchedule().getStaff().getFullName(), slotId);
+
+        return appt;
+
     }
 }
