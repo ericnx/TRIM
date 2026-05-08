@@ -3,8 +3,6 @@ package com.barbershop.repository;
 import com.barbershop.model.Appointment;
 import com.barbershop.model.AppointmentView;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
@@ -23,7 +21,7 @@ public class AppointmentRepository {
                     CONCAT(cp.first_name, ' ', cp.last_name)  AS client_name,
                     CONCAT(bp.first_name, ' ', bp.last_name)  AS barber_name,
                     bs.type                                    AS service_type,
-                    sc.day_of_week,
+                    a.slot_date,
                     a.slot_start_time,
                     a.current_price,
                     a.status
@@ -34,7 +32,7 @@ public class AppointmentRepository {
                 JOIN schedule    sc  ON sc.schedule_id = a.schedule_id
                 JOIN barber      b   ON b.barber_id  = sc.staff_id
                 JOIN person      bp  ON bp.person_id = b.barber_id
-                ORDER BY sc.day_of_week, a.slot_start_time
+                ORDER BY a.slot_date, a.slot_start_time
                 """;
 
         return jdbcClient.sql(sql)
@@ -43,7 +41,7 @@ public class AppointmentRepository {
                     view.setClientName(rs.getString("client_name"));
                     view.setBarberName(rs.getString("barber_name"));
                     view.setServiceType(rs.getString("service_type"));
-                    view.setDayOfWeek(rs.getString("day_of_week"));
+                    view.setDayOfWeek(rs.getDate("slot_date").toLocalDate().getDayOfWeek().name());
                     view.setSlotStartTime(rs.getTime("slot_start_time").toLocalTime());
                     view.setCurrentPrice(rs.getBigDecimal("current_price"));
                     view.setStatus(rs.getString("status"));
@@ -54,22 +52,20 @@ public class AppointmentRepository {
 
     public Appointment save(Appointment appointment) {
         String sql = """
-                INSERT INTO appointment (client_id, service_id, schedule_id, slot_id, status, current_price)
-                VALUES (:clientId, :serviceId, :scheduleId, :slotId, :status, :currentPrice)
+                INSERT INTO appointment (client_id, service_id, schedule_id, slot_start_time, slot_date, status, current_price)
+                VALUES (:clientId, :serviceId, :scheduleId, :slotStartTime, :slotDate, :status, :currentPrice)
                 """;
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-
         jdbcClient.sql(sql)
-                .param("clientId", appointment.getClient().getPersonId())
+                .param("clientId", appointment.getClient().getClientId())
                 .param("serviceId", appointment.getService().getServiceId())
-                .param("scheduleId", appointment.getSchedule().getScheduleId())
-                .param("slotId", appointment.getSlot().getSlotId())
+                .param("scheduleId", appointment.getSlot().getSchedule().getScheduleId())
+                .param("slotStartTime", appointment.getSlot().getSlotStartTime())
+                .param("slotDate", appointment.getSlot().getDate())
                 .param("status", appointment.getStatus().name())
                 .param("currentPrice", appointment.getCurrentPrice())
-                .update(keyHolder, "appointment_id");
+                .update();
 
-        appointment.setAppointmentId(keyHolder.getKey().longValue());
         return appointment;
     }
 }
