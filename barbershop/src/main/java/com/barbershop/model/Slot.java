@@ -5,104 +5,77 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "slot", uniqueConstraints = @UniqueConstraint(columnNames = { "schedule_id", "slot_start_time" }))
+@Table(name = "slot")
 public class Slot {
 
     public enum Status {
         AVAILABLE, BOOKED, UNAVAILABLE
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "slot_id")
-    private Long slotId;
+    @EmbeddedId
+    private SlotId id;
 
     @Version
-    @Column(name = "version", nullable = false)
-    private Long version;
+    private Integer version;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "schedule_id", nullable = false)
+    @MapsId("scheduleId")
+    @JoinColumn(name = "schedule_id")
     private Schedule schedule;
 
-    @Column(name = "slot_start_time", nullable = false)
-    private LocalTime slotStartTime;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     @Column(name = "slot_end_time")
     private LocalTime slotEndTime;
 
-    @Column(name = "date", nullable = false)
-    private LocalDate date;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private Status status;
-
     public Slot() {
     }
 
-    public Slot(Schedule schedule, LocalTime slotStartTime,
-            LocalTime slotEndTime, LocalDate date, Status status) {
+    public Slot(Schedule schedule, LocalTime slotStartTime, LocalTime slotEndTime, LocalDate date, Status status) {
+        this.id = new SlotId(schedule.getScheduleId(), slotStartTime, date);
         this.schedule = schedule;
-        this.slotStartTime = slotStartTime;
         this.slotEndTime = slotEndTime;
-        this.date = date;
         this.status = status;
     }
 
-    public Long getSlotId() {
-        return slotId;
+    public LocalTime getSlotStartTime() {
+        return id != null ? id.getSlotStartTime() : null;
     }
 
-    public Long getVersion() {
-        return version;
+    public LocalDate getDate() {
+        return id != null ? id.getDate() : null;
+    }
+
+    public SlotId getId() {
+        return id;
+    }
+
+    public void setId(SlotId id) {
+        this.id = id;
     }
 
     public Schedule getSchedule() {
         return schedule;
     }
 
-    public LocalTime getSlotStartTime() {
-        return slotStartTime;
-    }
-
     public LocalTime getSlotEndTime() {
         return slotEndTime;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public void setSlotEndTime(LocalTime slotEndTime) {
+        this.slotEndTime = slotEndTime;
     }
 
     public Status getStatus() {
         return status;
     }
 
-    public void setSlotId(Long id) {
-        this.slotId = id;
-    }
-
-    public void setVersion(Long v) {
-        this.version = v;
-    }
-
-    public void setSchedule(Schedule s) {
-        this.schedule = s;
-    }
-
-    public void setSlotStartTime(LocalTime t) {
-        this.slotStartTime = t;
-    }
-
-    public void setSlotEndTime(LocalTime t) {
-        this.slotEndTime = t;
-    }
-
-    public void setDate(LocalDate d) {
-        this.date = d;
-    }
-
     public void setStatus(Status s) {
         this.status = s;
+    }
+
+    public Integer getVersion() {
+        return version;
     }
 }
