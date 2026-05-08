@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: "Perandory";
+    src: url("/fonts/Perandory-Regular.otf") format("opentype");
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "nirmala-text";
+    src: local("Nirmala Text"), local("Nirmala");
+    font-weight: normal;
+    font-style: normal;
+  }
+}
