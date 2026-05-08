@@ -13,4 +13,8 @@ public class Client extends Person {
     public Client(String firstName, String lastName, String phone, String email) {
         super(firstName, lastName, phone, email);
     }
+
+    public Long getClientId() {
+        return super.getPersonId(); 
+    }
 }
