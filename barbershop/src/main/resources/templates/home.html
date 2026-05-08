@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TRIM</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-white text-black min-h-screen">
+    <div class="flex flex-col items-center justify-center h-screen">
+      <div class="text-center">
+        <h1 class="text-[10em] leading-none font-['Perandory'] tracking-wideuppercase">
+          Trim
+        </h1>
+        <p
+          class="-mt-6 text-[1.8em] pl-[0.62em] leading-none tracking-[0.4em] uppercase font-['nirmala-text']"
+        >
+          Barbershop
+        </p>
+      </div>
+
+      <a
+        th:href="@{/appointments/slots}"
+        class="shadow-lg mt-4 text-md px-8 py-2 bg-[#E3D39F] font-['nirmala-text'] rounded-full hover:bg-[#f5e4ab] hover:scale-105 transition"
+      >
+        Book a haircut
+      </a>
+    </div>
+  </body>
+</html>
