@@ -6,7 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Component
 public class BookingFacade {
@@ -20,10 +21,10 @@ public class BookingFacade {
         this.failedCounter = registry.counter("failed_bookings");
     }
 
-    public Appointment bookWithRetry(Long clientId, Long serviceId, Long slotId) {
+    public Appointment bookWithRetry(Long clientId, Long serviceId, Long scheduleId, LocalTime startTime, LocalDate date) {
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                return appointmentService.bookAppointment(clientId, serviceId, slotId);
+                return appointmentService.bookAppointment(clientId, serviceId, scheduleId, startTime, date);
 
             } catch (Exception ex) {
                 Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
@@ -39,13 +40,13 @@ public class BookingFacade {
 
                 if (attempt == MAX_RETRIES) {
                     failedCounter.increment();
-                    log.error("Booking failed (non-lock error): {}", ex.getMessage());
+                    log.error("Booking failed after maximum retries: {}", ex.getMessage());
                     throw new IllegalStateException(
-                            "Slot is no longer available. Please select a different time.", ex);
+                            "The slot was contested by another booking. Please try selecting the slot again.", ex);
                 }
                 try {
                     Thread.sleep(50L * attempt);
-                    log.info("Retrying booking (attempt {}): {}", attempt, ex.getMessage());
+                    log.info("Retrying booking due to conflict (attempt {}): {}", attempt, ex.getMessage());
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
