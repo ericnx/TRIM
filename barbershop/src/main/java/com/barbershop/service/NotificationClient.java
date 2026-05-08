@@ -21,14 +21,15 @@ public class NotificationClient {
             NotificationRequest request = new NotificationRequest(
                     appointment.getClient().getFullName(),
                     appointment.getClient().getEmail(),
-                    appointment.getSchedule().getStaff().getFullName(),
-                    appointment.getSchedule().getStaff().getEmail(),
+                    appointment.getSlot().getSchedule().getStaff().getFullName(),
+                    appointment.getSlot().getSchedule().getStaff().getEmail(),
                     appointment.getService().getType(),
-                    appointment.getSlot().getDate().toString(),
-                    appointment.getSlot().getSlotStartTime().toString(),
-                    appointment.getSlot().getSlotEndTime().toString(),
+                    String.valueOf(appointment.getSlot().getDate()),
+                    String.valueOf(appointment.getSlot().getSlotStartTime()),
+                    String.valueOf(appointment.getSlot().getSlotEndTime()),
                     appointment.getCurrentPrice().toString(),
-                    appointment.getAppointmentId());
+                    appointment.getClient().getClientId()
+            );
 
             ResponseEntity<NotificationResponse> response = restTemplate.postForEntity(
                     NOTIFICATION_URL,
