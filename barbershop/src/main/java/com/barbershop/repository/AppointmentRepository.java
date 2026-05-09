@@ -57,11 +57,11 @@ public class AppointmentRepository {
                 """;
 
         jdbcClient.sql(sql)
-                .param("clientId", appointment.getClient().getClientId())
-                .param("serviceId", appointment.getService().getServiceId())
-                .param("scheduleId", appointment.getSlot().getSchedule().getScheduleId())
-                .param("slotStartTime", appointment.getSlot().getSlotStartTime())
-                .param("slotDate", appointment.getSlot().getDate())
+                .param("clientId", appointment.getClientId())
+                .param("serviceId", appointment.getServiceId())
+                .param("scheduleId", appointment.getScheduleId())
+                .param("slotStartTime", appointment.getSlotStartTime())
+                .param("slotDate", appointment.getDate())
                 .param("status", appointment.getStatus().name())
                 .param("currentPrice", appointment.getCurrentPrice())
                 .update();
