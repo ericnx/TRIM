@@ -1,9 +1,12 @@
 package com.barbershop.controller;
 
-import com.barbershop.model.Appointment;
+import com.barbershop.model.Client;
+import com.barbershop.model.Schedule;
 import com.barbershop.model.Slot;
 import com.barbershop.repository.BarberRepository;
 import com.barbershop.repository.BarberServiceRepository;
+import com.barbershop.repository.ScheduleRepository;
+import com.barbershop.repository.ClientRepository;
 import com.barbershop.service.AppointmentService;
 import com.barbershop.service.SlotService;
 import com.barbershop.service.BookingFacade;
@@ -28,17 +31,23 @@ public class AppointmentController {
     private final SlotService slotService;
     private final AppointmentService appointmentService;
     private final BookingFacade bookingFacade;
+    private final ScheduleRepository scheduleRepository;
+    private final ClientRepository clientRepository;
 
     public AppointmentController(BarberRepository barberRepository,
             BarberServiceRepository serviceRepository,
             SlotService slotService,
             AppointmentService appointmentService,
-            BookingFacade bookingFacade) {
+            BookingFacade bookingFacade,
+            ScheduleRepository scheduleRepository,
+            ClientRepository clientRepository) {
         this.barberRepository = barberRepository;
         this.serviceRepository = serviceRepository;
         this.slotService = slotService;
         this.appointmentService = appointmentService;
         this.bookingFacade = bookingFacade;
+        this.scheduleRepository = scheduleRepository;
+        this.clientRepository = clientRepository;
     }
 
     @GetMapping
@@ -134,38 +143,54 @@ public class AppointmentController {
     }
 
     @GetMapping("/book")
-    public String bookForm(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+    public String showBookForm(@RequestParam Long serviceId,
+            @RequestParam Long scheduleId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             Model model) {
 
-        LocalDate selectedDate = (date == null) ? LocalDate.now() : date;
-
-        model.addAttribute("services", appointmentService.getAllServices());
-        model.addAttribute("availableSlots", appointmentService.getAvailableSlots(selectedDate));
-        model.addAttribute("selectedDate", selectedDate);
-
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
+        model.addAttribute("service", serviceRepository.findById(serviceId).orElse(null));
+        model.addAttribute("date", date);
+        model.addAttribute("startTime", startTime);
+        model.addAttribute("scheduleId", scheduleId);
+        model.addAttribute("barber", schedule.getStaff());
         return "appointments/book";
     }
 
     @PostMapping("/book")
-    public String book(@RequestParam Long clientId,
-            @RequestParam Long serviceId,
+    public String processBooking(@RequestParam Long serviceId,
             @RequestParam Long scheduleId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam String clientFirstName,
+            @RequestParam String clientLastName,
+            @RequestParam String clientEmail,
+            @RequestParam String clientPhone,
             RedirectAttributes ra) {
         try {
-            Appointment appt = bookingFacade.bookWithRetry(clientId, serviceId, scheduleId, startTime, date);
-            ra.addFlashAttribute("appointment", appt);
+            Client client = clientRepository.findByEmail(clientEmail)
+                    .orElseGet(() -> {
+                        var newClient = new com.barbershop.model.Client(
+                                clientFirstName,
+                                clientLastName,
+                                clientPhone,
+                                clientEmail);
+                        return clientRepository.saveAndFlush(newClient);
+                    });
+
+            bookingFacade.bookWithRetry(client.getClientId(), serviceId, scheduleId, startTime, date);
+
+            return "redirect:/appointments/confirm";
         } catch (Exception e) {
-            ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/appointments/book?date=" + date;
+            e.printStackTrace();
+            ra.addFlashAttribute("error", "Failed: " + e.getMessage());
+            return "redirect:/appointments/slots?date=" + date;
         }
-        return "redirect:/appointments/confirm";
     }
 
     @GetMapping("/confirm")
-    public String confirm() {
+    public String showSuccessPage() {
         return "appointments/confirm";
     }
 }
