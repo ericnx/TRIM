@@ -4,6 +4,21 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Database / Secrets
+application.properties
+.env
+
+# Logs
+*.log
+logs/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Project specific
+bin/
+
 ### STS ###
 .apt_generated
 .classpath
