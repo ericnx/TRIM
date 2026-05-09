@@ -1,5 +1,6 @@
 package com.barbershop.model;
 
+import java.util.List;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,6 +11,10 @@ public class Barber extends Person {
     public enum Role {
         staff, admin
     }
+
+    @ManyToMany
+    @JoinTable(name = "barber_services_mapping", joinColumns = @JoinColumn(name = "barber_id"), inverseJoinColumns = @JoinColumn(name = "service_id"))
+    private List<BarberService> services;
 
     @Column(name = "license_no", nullable = false, unique = true)
     private String licenseNo;
@@ -43,4 +48,8 @@ public class Barber extends Person {
     public void setRole(Role r) {
         this.role = r;
     }
+
+    public List<BarberService> getServices() {
+    return services;
+}
 }
