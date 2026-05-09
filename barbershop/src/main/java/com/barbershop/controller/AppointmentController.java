@@ -1,7 +1,6 @@
 package com.barbershop.controller;
 
 import com.barbershop.model.Client;
-import com.barbershop.model.Schedule;
 import com.barbershop.model.Slot;
 import com.barbershop.repository.BarberRepository;
 import com.barbershop.repository.BarberServiceRepository;
@@ -21,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 @Controller
 @RequestMapping("/appointments")
@@ -31,7 +31,6 @@ public class AppointmentController {
     private final SlotService slotService;
     private final AppointmentService appointmentService;
     private final BookingFacade bookingFacade;
-    private final ScheduleRepository scheduleRepository;
     private final ClientRepository clientRepository;
 
     public AppointmentController(BarberRepository barberRepository,
@@ -46,7 +45,6 @@ public class AppointmentController {
         this.slotService = slotService;
         this.appointmentService = appointmentService;
         this.bookingFacade = bookingFacade;
-        this.scheduleRepository = scheduleRepository;
         this.clientRepository = clientRepository;
     }
 
@@ -99,16 +97,21 @@ public class AppointmentController {
         if (barberId != null) {
             availableSlots = availableSlots.stream()
                     .filter(s -> {
-                        return s.getSchedule().getStaff().getPersonId().equals(barberId);
+                        return s.getScheduleId().equals(barberId);
                     })
                     .toList();
         }
+        model.addAttribute("slots", availableSlots);
 
         // service filter
         if (serviceType != null && !serviceType.isEmpty()) {
+            List<Long> qualifiedBarberIds = StreamSupport.stream(serviceRepository.findAll().spliterator(), false)
+                    .filter(svc -> svc.getType().equalsIgnoreCase(serviceType))
+                    .map(svc -> svc.getBarberId())
+                    .toList();
+
             availableSlots = availableSlots.stream()
-                    .filter(s -> s.getSchedule().getStaff().getServices().stream()
-                            .anyMatch(svc -> svc.getType().equalsIgnoreCase(serviceType)))
+                    .filter(s -> qualifiedBarberIds.contains(s.getScheduleId()))
                     .toList();
         }
 
@@ -130,15 +133,16 @@ public class AppointmentController {
         model.addAttribute("slots", availableSlots);
 
         // prices
-        List<java.math.BigDecimal> prices = availableSlots.stream()
-                .flatMap(s -> s.getSchedule().getStaff().getServices().stream())
-                .filter(svc -> serviceType == null || serviceType.isEmpty()
-                        || svc.getType().equalsIgnoreCase(serviceType))
-                .map(com.barbershop.model.BarberService::getPrice)
-                .distinct()
-                .toList();
-        model.addAttribute("prices", prices);
+        if (serviceType != null && !serviceType.isEmpty()) {
+            var service = StreamSupport.stream(serviceRepository.findAll().spliterator(), false)
+                    .filter(s -> s.getType().equalsIgnoreCase(serviceType))
+                    .findFirst()
+                    .orElse(null);
 
+            if (service != null) {
+                model.addAttribute("prices", List.of(service.getPrice()));
+            }
+        }
         return "appointments/slots";
     }
 
@@ -149,12 +153,15 @@ public class AppointmentController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
             Model model) {
 
-        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow();
-        model.addAttribute("service", serviceRepository.findById(serviceId).orElse(null));
+        var barber = barberRepository.findById(scheduleId).orElseThrow();
+        var service = serviceRepository.findById(serviceId).orElseThrow();
+
+        model.addAttribute("service", service);
         model.addAttribute("date", date);
         model.addAttribute("startTime", startTime);
         model.addAttribute("scheduleId", scheduleId);
-        model.addAttribute("barber", schedule.getStaff());
+        model.addAttribute("barber", barber);
+
         return "appointments/book";
     }
 

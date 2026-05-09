@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,14 +31,14 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> health() {
         log.info("Health check requested.");
         Map<String, Object> result = new LinkedHashMap<>();
-        boolean allUp = true;
+        boolean dbUp = false;
         try {
-            slotRepository.count();
-            result.put("database", "UP");
+            dbUp = slotRepository.checkConnection();
+            result.put("database", dbUp ? "UP" : "DOWN");
         } catch (Exception e) {
             result.put("database", "DOWN");
             log.error("Health check: database DOWN. {}", e.getMessage());
-            allUp = false;
+            dbUp = false;
         }
         try {
             restTemplate.getForObject(NOTIF_HEALTH_URL, String.class);
@@ -47,9 +48,9 @@ public class HealthController {
             log.warn("Health check: notification service unreachable.");
         }
         result.put("app", "UP");
-        result.put("status", allUp ? "UP" : "DOWN");
+        result.put("status", dbUp ? "UP" : "DOWN");
         result.put("timestamp", LocalDateTime.now().toString());
-        HttpStatus status = allUp ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
+        HttpStatus status = dbUp ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
         return ResponseEntity.status(status).body(result);
     }
 }
