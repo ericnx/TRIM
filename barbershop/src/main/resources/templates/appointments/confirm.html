@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TRIM - Appointment Confirmed</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-white min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full text-center">
+      <div
+        class="w-20 h-20 bg-[#E3D39F] rounded-full flex items-center justify-center mx-auto mb-6"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="3"
+          stroke="black"
+          class="w-10 h-10"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m4.5 12.75 6 6 9-13.5"
+          />
+        </svg>
+      </div>
+
+      <h1 class="text-8xl font-['Perandory']">booked!</h1>
+      <p class="text-xl font-['nirmala-text'] text-gray-500 mb-8">
+        Your appointment has been confirmed.
+      </p>
+
+      <a
+        href="/appointments/slots"
+        class="inline-block font-['nirmala-text'] text-md bg-[#E3D39F] text-black font-bold hover:bg-black hover:text-white hover:scale-105 transition-transform px-8 py-2.5 rounded-full"
+      >
+        Back to Calendar
+      </a>
+    </div>
+  </body>
+</html>
