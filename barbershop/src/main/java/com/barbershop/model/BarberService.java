@@ -8,12 +8,12 @@ public class BarberService {
     private Long barberId;
     private String type;
     private BigDecimal price;
-    private Integer duration;
+    private Long duration;
 
     public BarberService() {
     }
 
-    public BarberService(Long barberId, String type, BigDecimal price, Integer duration) {
+    public BarberService(Long barberId, String type, BigDecimal price, Long duration) {
         this.barberId = barberId;
         this.type = type;
         this.price = price;
@@ -52,11 +52,11 @@ public class BarberService {
         this.price = price;
     }
 
-    public Integer getDuration() {
+    public Long getDuration() {
         return duration;
     }
 
-    public void setDuration(Integer duration) {
+    public void setDuration(Long duration) {
         this.duration = duration;
     }
 }

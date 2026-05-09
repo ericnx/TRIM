@@ -1,0 +1,13 @@
+spring.application.name=barbershop
+spring.thymeleaf.cache=false
+spring.devtools.livereload.enabled=true
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/YOUR_DB_NAME
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.sql.init.mode=always
+
+logging.level.org.springframework.jdbc=DEBUG
+logging.level.com.barbershop=INFO

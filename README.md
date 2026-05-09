@@ -1,1 +1,1 @@
-# barbershop
+# TRIM Barbershop

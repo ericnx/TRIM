@@ -6,248 +6,115 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" />
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body
-    class="flex flex-col justify-center items-center bg-white min-h-screen p-8"
-  >
-    <a
-      href="/"
-      class="absolute top-8 left-8 w-12 h-12 flex items-center justify-center rounded-full border border-[#E5E6E8] hover:bg-[#E5E6E8] transition-all group"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-5 h-5 group-hover:scale-110 transition-transform"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-        />
+  <body class="flex flex-col justify-center items-center bg-white min-h-screen p-8">
+    
+    <a href="/" class="absolute top-8 left-8 w-12 h-12 flex items-center justify-center rounded-full border border-[#E5E6E8] hover:bg-[#E5E6E8] transition-all group">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 group-hover:scale-110 transition-transform">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
       </svg>
     </a>
 
     <div class="flex items-center justify-center gap-24 w-full mb-8 px-12">
-      <a
-        th:href="@{/appointments/slots(date=${selectedDate.minusMonths(1)})}"
-        class="text-7xl hover:scale-110 transition -translate-y-4 leading-none"
-        >‹</a
-      >
-
-      <h2
-        class="text-7xl text-center tracking-wide font-['Perandory'] uppercase leading-none"
-        th:text="${#temporals.format(selectedDate, 'MMMM yyyy')}"
-      ></h2>
-
-      <div class="flex items-center">
-        <a
-          th:href="@{/appointments/slots(date=${selectedDate.plusMonths(1)})}"
-          class="text-7xl hover:scale-110 transition -translate-y-4 leading-none"
-          >›</a
-        >
-      </div>
+      <a th:href="@{/appointments/slots(date=${selectedDate.minusMonths(1)})}" class="text-7xl hover:scale-110 transition -translate-y-4 leading-none">‹</a>
+      <h2 class="text-7xl text-center tracking-wide font-['Perandory'] uppercase leading-none" th:text="${#temporals.format(selectedDate, 'MMMM yyyy')}"></h2>
+      <a th:href="@{/appointments/slots(date=${selectedDate.plusMonths(1)})}" class="text-7xl hover:scale-110 transition -translate-y-4 leading-none">›</a>
     </div>
 
     <div class="grid grid-cols-7 w-full gap-1">
-      <div
-        th:each="label : ${ {'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'} }"
-        class="text-center font-['nirmala-text'] text-xl font-bold text-black py-2"
-        th:text="${label}"
-      ></div>
-
-      <div
-        th:if="${leadingEmptyDays > 0}"
-        th:each="i : ${#numbers.sequence(1, leadingEmptyDays)}"
-        class="h-12"
-      ></div>
-
+      <div th:each="label : ${ {'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'} }" class="text-center font-['nirmala-text'] text-xl font-bold text-black py-2" th:text="${label}"></div>
+      <div th:if="${leadingEmptyDays > 0}" th:each="i : ${#numbers.sequence(1, leadingEmptyDays)}" class="h-12"></div>
       <div th:each="day : ${daysInMonth}" class="flex justify-center">
-        <a
-          th:href="@{/appointments/slots(date=${day})}"
-          th:classappend="${
-            (day.isEqual(selectedDate) ? 'bg-[#E3D39F] font-bold' : 'hover:bg-[#E5E6E8]') +
-            (day.isEqual(T(java.time.LocalDate).now()) ? ' border-4 border-[#E5E6E8]' : '')
-          }"
-          class="w-14 h-14 flex items-center justify-center rounded-xl transition hover:scale-105 font-['nirmala-text'] text-lg"
-        >
-          <span th:text="${day.dayOfMonth}">1</span>
+        <a th:href="@{/appointments/slots(date=${day})}"
+           th:classappend="${(day.isEqual(selectedDate) ? 'bg-[#E3D39F] font-bold' : 'hover:bg-[#E5E6E8]') + (day.isEqual(T(java.time.LocalDate).now()) ? ' border-4 border-[#E5E6E8]' : '')}"
+           class="w-14 h-14 flex items-center justify-center rounded-xl transition hover:scale-105 font-['nirmala-text'] text-lg">
+          <span th:text="${day.dayOfMonth}"></span>
         </a>
       </div>
     </div>
 
     <div class="w-full mt-10">
-      <div
-        class="mb-6 border-b border-[#E5E6E8] pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4"
-      >
-        <h3
-          class="text-xl font-bold text-black font-['nirmala-text'] uppercase"
-        >
-          Available Times for
-          <span
-            th:text="${#temporals.format(selectedDate, 'MMMM d, yyyy')}"
-          ></span>
+      <div class="mb-6 border-b border-[#E5E6E8] pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <h3 class="text-xl font-bold text-black font-['nirmala-text'] uppercase">
+          Available Times for <span th:text="${#temporals.format(selectedDate, 'MMMM d, yyyy')}"></span>
         </h3>
 
-        <form
-          th:action="@{/appointments/slots}"
-          method="get"
-          class="flex flex-wrap gap-3"
-        >
+        <form th:action="@{/appointments/slots}" method="get" class="flex flex-wrap gap-3">
           <input type="hidden" name="date" th:value="${selectedDate}" />
-
-          <!-- Service Type Filter -->
-          <select
-            name="barberId"
-            onchange="this.form.submit()"
-            class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer"
-          >
+          
+          <select name="barberId" onchange="this.form.submit()" class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer">
             <option value="">All Barbers</option>
-            <option
-              th:each="barber : ${allBarbers}"
-              th:value="${barber.personId}"
-              th:text="${barber.firstName + ' ' + barber.lastName}"
-              th:selected="${barber.personId == selectedBarberId}"
-            ></option>
+            <option th:each="barber : ${allBarbers}" th:value="${barber.barberId}" th:text="${barber.firstName + ' ' + barber.lastName}" th:selected="${barber.barberId == selectedBarberId}"></option>
           </select>
 
-          <!-- Service Type Filter -->
-          <select
-            name="serviceType"
-            onchange="this.form.submit()"
-            class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer"
-          >
+          <select name="serviceType" onchange="this.form.submit()" class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer">
             <option value="">All Services</option>
-            <option
-              th:each="type : ${allServiceTypes}"
-              th:value="${type}"
-              th:text="${type}"
-              th:selected="${type == selectedServiceType}"
-            ></option>
+            <option th:each="type : ${allServiceTypes}" th:value="${type}" th:text="${type}" th:selected="${type == selectedServiceType}"></option>
           </select>
 
-           <!-- Time of Day Filter -->
-          <select
-            name="timeOfDay"
-            onchange="this.form.submit()"
-            class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer"
-          >
+          <select name="timeOfDay" onchange="this.form.submit()" class="bg-gray-100 hover:bg-[#E5E6E8] transition rounded-lg px-4 py-2 font-['nirmala-text'] text-sm font-bold cursor-pointer">
             <option value="">Any Time</option>
-            <option
-              value="morning"
-              th:selected="${selectedTimeOfDay == 'morning'}"
-            >
-              Morning (Before 12pm)
-            </option>
-            <option
-              value="afternoon"
-              th:selected="${selectedTimeOfDay == 'afternoon'}"
-            >
-              Afternoon (12pm - 5pm)
-            </option>
-            <option
-              value="evening"
-              th:selected="${selectedTimeOfDay == 'evening'}"
-            >
-              Evening (After 5pm)
-            </option>
+            <option value="morning" th:selected="${selectedTimeOfDay == 'morning'}">Morning (Before 12pm)</option>
+            <option value="afternoon" th:selected="${selectedTimeOfDay == 'afternoon'}">Afternoon (12pm - 5pm)</option>
+            <option value="evening" th:selected="${selectedTimeOfDay == 'evening'}">Evening (After 5pm)</option>
           </select>
         </form>
       </div>
 
-      <div
-        th:if="${!#lists.isEmpty(slots)}"
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-      >
+      <div th:if="${slots != null and !#lists.isEmpty(slots)}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        
         <th:block th:each="slot : ${slots}">
-          <th:block th:each="service : ${slot.schedule.staff.services}">
-            <div
-              th:if="${selectedServiceType == null or selectedServiceType == '' or service.type == selectedServiceType}"
-              class="flex flex-col justify-between bg-white rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all hover:bg-[#E5E6E8] hover:scale-105"
-            >
-              <form
-                th:action="@{/appointments/book}"
-                method="get"
-                class="flex flex-col h-full justify-between"
-              >
-                <input
-                  type="hidden"
-                  name="scheduleId"
-                  th:value="${slot.id.scheduleId}"
-                />
-                <input
-                  type="hidden"
-                  name="startTime"
-                  th:value="${slot.id.slotStartTime}"
-                />
-                <input type="hidden" name="date" th:value="${slot.id.date}" />
-                <input
-                  type="hidden"
-                  name="serviceId"
-                  th:value="${service.serviceId}"
-                />
+          <th:block th:if="${slot != null}">
+            <th:block th:each="sch : ${allSchedules}" th:if="${sch != null and sch.scheduleId == slot.scheduleId}">
+              
+              <th:block th:each="service : ${allServices}" th:if="${service != null and sch.staffId == service.barberId}">
+                
+                <div th:if="${selectedServiceType == null or selectedServiceType == '' or service.type == selectedServiceType}"
+                     class="flex flex-col justify-between bg-white rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all hover:bg-[#E5E6E8] hover:scale-105">
+                  
+                  <form th:action="@{/appointments/book}" method="get" class="flex flex-col h-full justify-between">
+                    <input type="hidden" name="scheduleId" th:value="${slot.scheduleId}" />
+                    <input type="hidden" name="startTime" th:value="${slot.slotStartTime}" />
+                    <input type="hidden" name="date" th:value="${slot.date}" />
+                    <input type="hidden" name="serviceId" th:value="${service.serviceId}" />
 
-                <div class="flex flex-col gap-1 mb-4">
-                  <div class="flex items-center justify-between">
-                    <span
-                      class="text-xl font-['nirmala-text'] font-bold text-black"
-                      th:text="${#temporals.format(slot.slotStartTime, 'h:mm a')}"
-                    >
-                      9:00 AM
-                    </span>
-                    <span
-                      class="text-xl font-['nirmala-text'] font-bold text-black"
-                      th:text="${#numbers.formatCurrency(service.price)}"
-                    >
-                      $0.00
-                    </span>
-                  </div>
+                    <div class="flex flex-col gap-1 mb-4">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xl font-['nirmala-text'] font-bold text-black" 
+                              th:text="${#temporals.format(slot.slotStartTime, 'h:mm a')}"></span>
+                        <span class="text-xl font-['nirmala-text'] font-bold text-black" 
+                              th:text="${#numbers.formatCurrency(service.price)}"></span>
+                      </div>
 
-                  <div class="flex justify-between gap-2 mt-1">
-                    <span
-                      class="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-['nirmala-text']"
-                      th:text="${slot.schedule.staff.firstName + ' ' + slot.schedule.staff.lastName}"
-                    >
-                      Barber Name
-                    </span>
-                    <span
-                      class="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-['nirmala-text']"
-                      th:text="${service.duration + ' min'}"
-                    >
-                      30 min
-                    </span>
-                  </div>
+                      <div class="flex justify-between gap-2 mt-1">
+                        <span class="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-['nirmala-text']"
+                              th:each="b : ${allBarbers}" th:if="${b.barberId == sch.staffId}"
+                              th:text="${b.firstName + ' ' + b.lastName}"></span>
 
-                  <div class="flex mt-1">
-                    <div
-                      class="text-sm bg-[#e3d39f]/50 px-2 py-0.5 rounded-md text-black font-['nirmala-text']"
-                    >
-                      <span th:text="${service.type}">Service Name</span>
+                        <span class="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-['nirmala-text']" 
+                              th:text="${service.duration + ' min'}"></span>
+                      </div>
+                      <div class="flex mt-1">
+                        <div class="text-sm bg-[#e3d39f]/50 px-2 py-0.5 rounded-md text-black font-['nirmala-text']">
+                          <span th:text="${service.type}"></span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    
+                    <button type="submit" class="bg-gray-100 w-full py-2.5 rounded-full text-md text-center font-bold font-['nirmala-text'] hover:bg-black hover:text-white transition-all shadow-md mt-auto">
+                      Next
+                    </button>
+                  </form>
                 </div>
-
-                <button
-                  type="submit"
-                  class="bg-gray-100 w-full py-2.5 rounded-full text-md text-center font-bold font-['nirmala-text'] hover:bg-black hover:text-white transition-all shadow-md mt-auto"
-                >
-                  Next
-                </button>
-              </form>
-            </div>
+              </th:block>
+            </th:block>
           </th:block>
         </th:block>
       </div>
 
-      <div
-        th:if="${#lists.isEmpty(slots)}"
-        class="w-full text-center py-20 bg-[#E5E6E8] rounded-2xl"
-      >
-        <p class="text-gray-600 text-xl font-bold font-['nirmala-text']">
-          No available times found for this day.
-        </p>
+      <div th:if="${slots == null or #lists.isEmpty(slots)}" class="w-full text-center py-20 bg-[#E5E6E8] rounded-2xl">
+        <p class="text-gray-600 text-xl font-bold font-['nirmala-text']">No available times found for this day.</p>
       </div>
+      
     </div>
   </body>
 </html>

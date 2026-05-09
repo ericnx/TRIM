@@ -1,11 +1,8 @@
 package com.barbershop.controller;
 
-import com.barbershop.model.Client;
-import com.barbershop.model.Slot;
-import com.barbershop.repository.BarberRepository;
-import com.barbershop.repository.BarberServiceRepository;
-import com.barbershop.repository.ScheduleRepository;
-import com.barbershop.repository.ClientRepository;
+import com.barbershop.dto.SlotDTO;
+import com.barbershop.model.*;
+import com.barbershop.repository.*;
 import com.barbershop.service.AppointmentService;
 import com.barbershop.service.SlotService;
 import com.barbershop.service.BookingFacade;
@@ -20,7 +17,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 @Controller
 @RequestMapping("/appointments")
@@ -32,26 +28,22 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
     private final BookingFacade bookingFacade;
     private final ClientRepository clientRepository;
+    private final ScheduleRepository scheduleRepository;
 
     public AppointmentController(BarberRepository barberRepository,
-            BarberServiceRepository serviceRepository,
-            SlotService slotService,
-            AppointmentService appointmentService,
-            BookingFacade bookingFacade,
-            ScheduleRepository scheduleRepository,
-            ClientRepository clientRepository) {
+                                 BarberServiceRepository serviceRepository,
+                                 SlotService slotService,
+                                 AppointmentService appointmentService,
+                                 BookingFacade bookingFacade,
+                                 ScheduleRepository scheduleRepository,
+                                 ClientRepository clientRepository) {
         this.barberRepository = barberRepository;
         this.serviceRepository = serviceRepository;
         this.slotService = slotService;
         this.appointmentService = appointmentService;
         this.bookingFacade = bookingFacade;
         this.clientRepository = clientRepository;
-    }
-
-    @GetMapping
-    public String list(Model model) {
-        model.addAttribute("appointments", appointmentService.getAllAppointments());
-        return "appointments/list";
+        this.scheduleRepository = scheduleRepository;
     }
 
     @GetMapping("/slots")
@@ -71,127 +63,110 @@ public class AppointmentController {
             daysInMonth.add(firstDayOfMonth.plusDays(i));
         }
 
+        List<Barber> allBarbers = barberRepository.findAll();
+        List<BarberService> allServices = serviceRepository.findAll();
+        List<Schedule> allSchedules = scheduleRepository.findAll();
+        List<Slot> rawSlots = slotService.getAvailableSlots(selectedDate, null, null);
+        
+        List<SlotDTO> displaySlots = new ArrayList<>();
+
+        for (Slot slot : rawSlots) {
+            Schedule sch = allSchedules.stream()
+                    .filter(s -> s.getScheduleId().equals(slot.getScheduleId()))
+                    .findFirst().orElse(null);
+
+            if (sch == null) continue;
+
+            Barber barber = allBarbers.stream()
+                    .filter(b -> b.getBarberId().equals(sch.getStaffId()))
+                    .findFirst().orElse(null);
+
+            if (barber == null) continue;
+
+            allServices.stream()
+                    .filter(svc -> svc.getBarberId().equals(barber.getBarberId()))
+                    .filter(svc -> serviceType == null || serviceType.isEmpty() || svc.getType().equalsIgnoreCase(serviceType))
+                    .forEach(svc -> {
+                        SlotDTO dto = new SlotDTO();
+                        dto.setScheduleId(slot.getScheduleId());
+                        dto.setServiceId(svc.getServiceId());
+                        dto.setStartTime(slot.getSlotStartTime());
+                        dto.setDate(slot.getDate());
+                        dto.setBarberName(barber.getFirstName() + " " + barber.getLastName());
+                        dto.setServiceType(svc.getType());
+                        dto.setPrice(svc.getPrice());
+                        dto.setDuration(svc.getDuration());
+                        displaySlots.add(dto);
+                    });
+        }
+
+        List<SlotDTO> finalSlots = displaySlots.stream()
+                .filter(dto -> barberId == null || barberId == 0 || allSchedules.stream()
+                        .anyMatch(s -> s.getScheduleId().equals(dto.getScheduleId()) && s.getStaffId().equals(barberId)))
+                .filter(dto -> {
+                    if (timeOfDay == null || timeOfDay.isEmpty()) return true;
+                    int hour = dto.getStartTime().getHour();
+                    return switch (timeOfDay.toLowerCase()) {
+                        case "morning" -> hour < 12;
+                        case "afternoon" -> hour >= 12 && hour < 17;
+                        case "evening" -> hour >= 17;
+                        default -> true;
+                    };
+                }).toList();
+
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("daysInMonth", daysInMonth);
         model.addAttribute("leadingEmptyDays", leadingEmptyDays);
-
-        List<com.barbershop.model.Barber> allBarbers = new ArrayList<>();
-        barberRepository.findAll().forEach(allBarbers::add);
         model.addAttribute("allBarbers", allBarbers);
-
-        List<String> allServiceTypes = new ArrayList<>();
-        serviceRepository.findAll().forEach(s -> {
-            if (!allServiceTypes.contains(s.getType())) {
-                allServiceTypes.add(s.getType());
-            }
-        });
-        model.addAttribute("allServiceTypes", allServiceTypes);
-
+        model.addAttribute("allServiceTypes", allServices.stream().map(BarberService::getType).distinct().toList());
+        
         model.addAttribute("selectedBarberId", barberId);
         model.addAttribute("selectedServiceType", serviceType);
         model.addAttribute("selectedTimeOfDay", timeOfDay);
+        
+        model.addAttribute("slots", finalSlots);
 
-        List<Slot> availableSlots = slotService.getAvailableSlots(selectedDate, null, null);
-
-        // barber filter
-        if (barberId != null) {
-            availableSlots = availableSlots.stream()
-                    .filter(s -> {
-                        return s.getScheduleId().equals(barberId);
-                    })
-                    .toList();
-        }
-        model.addAttribute("slots", availableSlots);
-
-        // service filter
-        if (serviceType != null && !serviceType.isEmpty()) {
-            List<Long> qualifiedBarberIds = StreamSupport.stream(serviceRepository.findAll().spliterator(), false)
-                    .filter(svc -> svc.getType().equalsIgnoreCase(serviceType))
-                    .map(svc -> svc.getBarberId())
-                    .toList();
-
-            availableSlots = availableSlots.stream()
-                    .filter(s -> qualifiedBarberIds.contains(s.getScheduleId()))
-                    .toList();
-        }
-
-        // time filter
-        if (timeOfDay != null && !timeOfDay.isEmpty()) {
-            availableSlots = availableSlots.stream()
-                    .filter(s -> {
-                        int hour = s.getSlotStartTime().getHour();
-                        return switch (timeOfDay.toLowerCase()) {
-                            case "morning" -> hour < 12;
-                            case "afternoon" -> hour >= 12 && hour < 17;
-                            case "evening" -> hour >= 17;
-                            default -> true;
-                        };
-                    })
-                    .toList();
-        }
-
-        model.addAttribute("slots", availableSlots);
-
-        // prices
-        if (serviceType != null && !serviceType.isEmpty()) {
-            var service = StreamSupport.stream(serviceRepository.findAll().spliterator(), false)
-                    .filter(s -> s.getType().equalsIgnoreCase(serviceType))
-                    .findFirst()
-                    .orElse(null);
-
-            if (service != null) {
-                model.addAttribute("prices", List.of(service.getPrice()));
-            }
-        }
         return "appointments/slots";
     }
 
     @GetMapping("/book")
-    public String showBookForm(@RequestParam Long serviceId,
-            @RequestParam Long scheduleId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-            Model model) {
-
-        var barber = barberRepository.findById(scheduleId).orElseThrow();
-        var service = serviceRepository.findById(serviceId).orElseThrow();
-
-        model.addAttribute("service", service);
+    public String showBookForm(@RequestParam Long serviceId, 
+                               @RequestParam Long scheduleId,
+                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime, 
+                               Model model) {
+        
+        model.addAttribute("service", serviceRepository.findById(serviceId).orElseThrow());
+        // For the barber lookup, we look at the schedule table first
+        Schedule sch = scheduleRepository.findAll().stream()
+                .filter(s -> s.getScheduleId().equals(scheduleId))
+                .findFirst().orElseThrow();
+        
+        model.addAttribute("barber", barberRepository.findById(sch.getStaffId()).orElseThrow());
         model.addAttribute("date", date);
         model.addAttribute("startTime", startTime);
         model.addAttribute("scheduleId", scheduleId);
-        model.addAttribute("barber", barber);
-
         return "appointments/book";
     }
 
     @PostMapping("/book")
-    public String processBooking(@RequestParam Long serviceId,
-            @RequestParam Long scheduleId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam String clientFirstName,
-            @RequestParam String clientLastName,
-            @RequestParam String clientEmail,
-            @RequestParam String clientPhone,
-            RedirectAttributes ra) {
+    public String processBooking(@RequestParam Long serviceId, 
+                                 @RequestParam Long scheduleId,
+                                 @RequestParam LocalDate date, 
+                                 @RequestParam LocalTime startTime,
+                                 @RequestParam String clientFirstName, 
+                                 @RequestParam String clientLastName,
+                                 @RequestParam String clientEmail, 
+                                 @RequestParam String clientPhone, 
+                                 RedirectAttributes ra) {
         try {
-            Client client = clientRepository.findByEmail(clientEmail)
-                    .orElseGet(() -> {
-                        var newClient = new com.barbershop.model.Client(
-                                clientFirstName,
-                                clientLastName,
-                                clientPhone,
-                                clientEmail);
-                        return clientRepository.saveAndFlush(newClient);
-                    });
-
+            Client client = clientRepository.findByEmail(clientEmail).orElseGet(() -> 
+                clientRepository.saveAndFlush(new Client(clientFirstName, clientLastName, clientPhone, clientEmail)));
+            
             bookingFacade.bookWithRetry(client.getClientId(), serviceId, scheduleId, startTime, date);
-
             return "redirect:/appointments/confirm";
         } catch (Exception e) {
-            e.printStackTrace();
-            ra.addFlashAttribute("error", "Failed: " + e.getMessage());
+            ra.addFlashAttribute("error", "Booking failed: " + e.getMessage());
             return "redirect:/appointments/slots?date=" + date;
         }
     }
