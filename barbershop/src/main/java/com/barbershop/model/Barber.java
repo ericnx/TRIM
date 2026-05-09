@@ -1,7 +1,5 @@
 package com.barbershop.model;
 
-import java.util.List;
-
 public class Barber extends Person {
 
     private Long barberId;
