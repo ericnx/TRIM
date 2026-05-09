@@ -1,17 +1,25 @@
 DROP TABLE IF EXISTS appointment;
 DROP TABLE IF EXISTS slot;
 DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS barber_service;
+DROP TABLE IF EXISTS barber_services_mapping; 
+DROP TABLE IF EXISTS services;
 DROP TABLE IF EXISTS client;
 DROP TABLE IF EXISTS barber;
 DROP TABLE IF EXISTS person;
 
 CREATE TABLE person (
-    person_id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    person_id   BIGSERIAL PRIMARY KEY,
     first_name  VARCHAR(100) NOT NULL,
     last_name   VARCHAR(100) NOT NULL,
     phone       VARCHAR(20),
     email       VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE services (
+    service_id BIGSERIAL PRIMARY KEY,
+    type       VARCHAR(100)   NOT NULL,
+    price      DECIMAL(8, 2)  NOT NULL,
+    duration   INT            NOT NULL
 );
 
 CREATE TABLE client (
@@ -26,15 +34,16 @@ CREATE TABLE barber (
     FOREIGN KEY (barber_id) REFERENCES person(person_id)
 );
 
-CREATE TABLE barber_service (
-    service_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    type       VARCHAR(100)   NOT NULL,
-    price      DECIMAL(8, 2)  NOT NULL,
-    duration   INT            NOT NULL
+CREATE TABLE barber_services_mapping (
+    barber_id  BIGINT NOT NULL,
+    service_id BIGINT NOT NULL,
+    PRIMARY KEY (barber_id, service_id),
+    FOREIGN KEY (barber_id) REFERENCES barber(barber_id),
+    FOREIGN KEY (service_id) REFERENCES services(service_id)
 );
 
 CREATE TABLE schedule (
-    schedule_id      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    schedule_id      BIGSERIAL PRIMARY KEY,
     admin_id         BIGINT NOT NULL,
     staff_id         BIGINT NOT NULL,
     day_of_week      VARCHAR(3) NOT NULL,
@@ -66,7 +75,7 @@ CREATE TABLE appointment (
     PRIMARY KEY (client_id, schedule_id, slot_start_time, date),
     UNIQUE (schedule_id, slot_start_time, date),
     FOREIGN KEY (client_id) REFERENCES client(client_id),
-    FOREIGN KEY (service_id) REFERENCES barber_service(service_id),
+    FOREIGN KEY (service_id) REFERENCES services(service_id),
     FOREIGN KEY (schedule_id, slot_start_time, date) 
         REFERENCES slot(schedule_id, slot_start_time, date)
 );
