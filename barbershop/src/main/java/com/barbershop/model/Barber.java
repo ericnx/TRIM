@@ -1,43 +1,56 @@
 package com.barbershop.model;
 
 import java.util.List;
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "barber")
-@PrimaryKeyJoinColumn(name = "barber_id")
 public class Barber extends Person {
 
-    public enum Role {
-        staff, admin
-    }
-
-    @ManyToMany
-    @JoinTable(name = "barber_services_mapping", joinColumns = @JoinColumn(name = "barber_id"), inverseJoinColumns = @JoinColumn(name = "service_id"))
-    private List<BarberService> services;
-
-    @Column(name = "license_no", nullable = false, unique = true)
+    private Long barberId;
+    private String firstName;
+    private String lastName;
+    private String email;
     private String licenseNo;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private Role role;
+    private String role;
 
     public Barber() {
     }
 
-    public Barber(String firstName, String lastName, String phone,
-            String email, String licenseNo, Role role) {
-        super(firstName, lastName, phone, email);
-        this.licenseNo = licenseNo;
-        this.role = role;
+    public Long getBarberId() {
+        return barberId;
+    }
+
+    public void setBarberId(Long barberId) {
+        this.barberId = barberId;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public String getLicenseNo() {
         return licenseNo;
     }
 
-    public Role getRole() {
+    public String getRole() {
         return role;
     }
 
@@ -45,11 +58,8 @@ public class Barber extends Person {
         this.licenseNo = s;
     }
 
-    public void setRole(Role r) {
+    public void setRole(String r) {
         this.role = r;
     }
 
-    public List<BarberService> getServices() {
-    return services;
-}
 }

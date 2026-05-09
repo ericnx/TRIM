@@ -1,30 +1,20 @@
 package com.barbershop.model;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "services")
 public class BarberService {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "service_id")
     private Long serviceId;
-
-    @Column(name = "type", nullable = false)
+    private Long barberId;
     private String type;
-
-    @Column(name = "price", nullable = false, precision = 8, scale = 2)
     private BigDecimal price;
-
-    @Column(name = "duration", nullable = false)
     private Integer duration;
 
     public BarberService() {
     }
 
-    public BarberService(String type, BigDecimal price, Integer duration) {
+    public BarberService(Long barberId, String type, BigDecimal price, Integer duration) {
+        this.barberId = barberId;
         this.type = type;
         this.price = price;
         this.duration = duration;
@@ -34,31 +24,39 @@ public class BarberService {
         return serviceId;
     }
 
+    public void setServiceId(Long serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public Long getBarberId() {
+        return barberId;
+    }
+
+    public void setBarberId(Long barberId) {
+        this.barberId = barberId;
+    }
+
     public String getType() {
         return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public BigDecimal getPrice() {
         return price;
     }
 
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
     public Integer getDuration() {
         return duration;
     }
 
-    public void setServiceId(Long id) {
-        this.serviceId = id;
-    }
-
-    public void setType(String t) {
-        this.type = t;
-    }
-
-    public void setPrice(BigDecimal p) {
-        this.price = p;
-    }
-
-    public void setDuration(Integer d) {
-        this.duration = d;
+    public void setDuration(Integer duration) {
+        this.duration = duration;
     }
 }

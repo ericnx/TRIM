@@ -1,89 +1,75 @@
 package com.barbershop.model;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
-@Entity
-@Table(name = "appointment")
 public class Appointment {
 
     public enum Status {
         PENDING, CONFIRMED, CANCELLED, COMPLETED
     }
 
-    @EmbeddedId
-    private AppointmentId id;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @MapsId("clientId")
-    @JoinColumn(name = "client_id")
-    private Client client;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "service_id", nullable = false)
-    private BarberService service;
-
-@ManyToOne
-@JoinColumns({
-    @JoinColumn(name = "schedule_id", referencedColumnName = "schedule_id", insertable = false, updatable = false),
-    @JoinColumn(name = "slot_start_time", referencedColumnName = "slot_start_time", insertable = false, updatable = false),
-    @JoinColumn(name = "date", referencedColumnName = "date", insertable = false, updatable = false)
-})
-private Slot slot;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    private Long clientId;
+    private Long serviceId;
+    private Long scheduleId;
+    private LocalTime slotStartTime;
+    private LocalDate date;
     private Status status;
-
-    @Column(name = "current_price", nullable = false, precision = 8, scale = 2)
     private BigDecimal currentPrice;
 
     public Appointment() {
     }
 
-    public Appointment(Client client, Slot slot, BarberService service, Status status, BigDecimal currentPrice) {
-        this.id = new AppointmentId(
-                client.getClientId(),
-                slot.getSchedule().getScheduleId(),
-                slot.getSlotStartTime(),
-                slot.getDate());
-        this.client = client;
-        this.slot = slot;
-        this.service = service;
+    public Appointment(Long clientId, Long serviceId, Long scheduleId, LocalTime slotStartTime, LocalDate date,
+            Status status, BigDecimal currentPrice) {
+        this.clientId = clientId;
+        this.serviceId = serviceId;
+        this.scheduleId = scheduleId;
+        this.slotStartTime = slotStartTime;
+        this.date = date;
         this.status = status;
         this.currentPrice = currentPrice;
     }
 
-    public AppointmentId getId() {
-        return id;
+    public Long getClientId() {
+        return clientId;
     }
 
-    public void setId(AppointmentId id) {
-        this.id = id;
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 
-    public Client getClient() {
-        return client;
+    public Long getServiceId() {
+        return serviceId;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    public void setServiceId(Long serviceId) {
+        this.serviceId = serviceId;
     }
 
-    public Slot getSlot() {
-        return slot;
+    public Long getScheduleId() {
+        return scheduleId;
     }
 
-    public void setSlot(Slot slot) {
-        this.slot = slot;
+    public void setScheduleId(Long scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
-    public BarberService getService() {
-        return service;
+    public LocalTime getSlotStartTime() {
+        return slotStartTime;
     }
 
-    public void setService(BarberService service) {
-        this.service = service;
+    public void setSlotStartTime(LocalTime slotStartTime) {
+        this.slotStartTime = slotStartTime;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public Status getStatus() {

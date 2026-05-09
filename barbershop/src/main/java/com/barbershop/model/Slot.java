@@ -1,62 +1,42 @@
 package com.barbershop.model;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Entity
-@Table(name = "slot")
 public class Slot {
 
-    public enum Status {
-        AVAILABLE, BOOKED, UNAVAILABLE
-    }
-
-    @EmbeddedId
-    private SlotId id;
-
-    @Version
-    private Integer version;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @MapsId("scheduleId")
-    @JoinColumn(name = "schedule_id")
-    private Schedule schedule;
-
-    @Enumerated(EnumType.STRING)
-    private Status status;
-
-    @Column(name = "slot_end_time")
+    private Long scheduleId;
+    private LocalTime slotStartTime;
+    private LocalDate date;
     private LocalTime slotEndTime;
+    private String status;
+    private Integer version;
 
     public Slot() {
     }
 
-    public Slot(Schedule schedule, LocalTime slotStartTime, LocalTime slotEndTime, LocalDate date, Status status) {
-        this.id = new SlotId(schedule.getScheduleId(), slotStartTime, date);
-        this.schedule = schedule;
-        this.slotEndTime = slotEndTime;
-        this.status = status;
+    public Long getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(Long scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
     public LocalTime getSlotStartTime() {
-        return id != null ? id.getSlotStartTime() : null;
+        return slotStartTime;
+    }
+
+    public void setSlotStartTime(LocalTime slotStartTime) {
+        this.slotStartTime = slotStartTime;
     }
 
     public LocalDate getDate() {
-        return id != null ? id.getDate() : null;
+        return date;
     }
 
-    public SlotId getId() {
-        return id;
-    }
-
-    public void setId(SlotId id) {
-        this.id = id;
-    }
-
-    public Schedule getSchedule() {
-        return schedule;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public LocalTime getSlotEndTime() {
@@ -67,15 +47,19 @@ public class Slot {
         this.slotEndTime = slotEndTime;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status s) {
-        this.status = s;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Integer getVersion() {
         return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 }

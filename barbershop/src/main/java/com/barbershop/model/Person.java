@@ -1,27 +1,11 @@
 package com.barbershop.model;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "person")
-@Inheritance(strategy = InheritanceType.JOINED)
 public class Person {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "person_id")
     private Long personId;
-
-    @Column(name = "first_name", nullable = false)
     private String firstName;
-
-    @Column(name = "last_name", nullable = false)
     private String lastName;
-
-    @Column(name = "phone")
     private String phone;
-
-    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     public Person() {
@@ -38,40 +22,40 @@ public class Person {
         return personId;
     }
 
+    public void setPersonId(Long personId) {
+        this.personId = personId;
+    }
+
     public String getFirstName() {
         return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
         return lastName;
     }
 
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public String getPhone() {
         return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setPersonId(Long id) {
-        this.personId = id;
-    }
-
-    public void setFirstName(String s) {
-        this.firstName = s;
-    }
-
-    public void setLastName(String s) {
-        this.lastName = s;
-    }
-
-    public void setPhone(String s) {
-        this.phone = s;
-    }
-
-    public void setEmail(String s) {
-        this.email = s;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getFullName() {
