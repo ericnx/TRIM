@@ -2,7 +2,8 @@ package com.barbershop.service;
 
 import com.barbershop.dto.NotificationRequest;
 import com.barbershop.dto.NotificationResponse;
-import com.barbershop.model.Appointment;
+import com.barbershop.model.*;
+import com.barbershop.repository.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -11,24 +12,37 @@ import org.springframework.web.client.RestTemplate;
 public class NotificationClient {
     private static final String NOTIFICATION_URL = "http://localhost:8080/api/notifications/booking-confirmation";
     private final RestTemplate restTemplate;
+    private final ClientRepository clientRepo;
+    private final BarberRepository barberRepo;
+    private final BarberServiceRepository serviceRepo;
 
-    public NotificationClient(RestTemplate restTemplate) {
+    public NotificationClient(RestTemplate restTemplate, 
+                              ClientRepository clientRepo, 
+                              BarberRepository barberRepo,
+                              BarberServiceRepository serviceRepo) {
         this.restTemplate = restTemplate;
+        this.clientRepo = clientRepo;
+        this.barberRepo = barberRepo;
+        this.serviceRepo = serviceRepo;
     }
 
     public String notifyBooking(Appointment appointment) {
         try {
+            Client client = clientRepo.findById(appointment.getClientId()).orElseThrow();
+            Barber barber = barberRepo.findById(appointment.getScheduleId()).orElseThrow();
+            BarberService service = serviceRepo.findById(appointment.getServiceId()).orElseThrow();
+
             NotificationRequest request = new NotificationRequest(
-                    appointment.getClient().getFullName(),
-                    appointment.getClient().getEmail(),
-                    appointment.getSlot().getSchedule().getStaff().getFullName(),
-                    appointment.getSlot().getSchedule().getStaff().getEmail(),
-                    appointment.getService().getType(),
-                    String.valueOf(appointment.getSlot().getDate()),
-                    String.valueOf(appointment.getSlot().getSlotStartTime()),
-                    String.valueOf(appointment.getSlot().getSlotEndTime()),
+                    client.getFirstName() + " " + client.getLastName(),
+                    client.getEmail(),
+                    barber.getFirstName() + " " + barber.getLastName(),
+                    "barber@trim.com",
+                    service.getType(),
+                    String.valueOf(appointment.getDate()),
+                    String.valueOf(appointment.getSlotStartTime()),
+                    "N/A",
                     appointment.getCurrentPrice().toString(),
-                    appointment.getClient().getClientId()
+                    appointment.getClientId()
             );
 
             ResponseEntity<NotificationResponse> response = restTemplate.postForEntity(
@@ -37,14 +51,11 @@ public class NotificationClient {
                     NotificationResponse.class);
 
             if (response.getBody() != null) {
-                System.out.println("[NotificationClient] " +
-                        response.getBody().getEmailsSent() + " emails sent. ID: " +
-                        response.getBody().getNotificationId());
                 return response.getBody().getNotificationId();
             }
 
         } catch (Exception e) {
-            System.err.println("[NotificationClient] WARNING: " + e.getMessage());
+            System.err.println("[NotificationClient] WARNING: External Service Unreachable: " + e.getMessage());
         }
         return null;
     }

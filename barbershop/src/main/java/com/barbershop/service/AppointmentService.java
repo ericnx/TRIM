@@ -17,19 +17,16 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepo;
     private final SlotRepository slotRepo;
-    private final ClientRepository clientRepo;
     private final BarberServiceRepository serviceRepo;
     private final BarberRepository barberRepo;
     private static final Logger log = LoggerFactory.getLogger(AppointmentService.class);
 
     public AppointmentService(AppointmentRepository appointmentRepo,
             SlotRepository slotRepo,
-            ClientRepository clientRepo,
             BarberServiceRepository serviceRepo,
             BarberRepository barberRepo) {
         this.appointmentRepo = appointmentRepo;
         this.slotRepo = slotRepo;
-        this.clientRepo = clientRepo;
         this.serviceRepo = serviceRepo;
         this.barberRepo = barberRepo;
     }
@@ -55,27 +52,29 @@ public class AppointmentService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
-    public Appointment bookAppointment(Long clientId, Long serviceId, Long scheduleId, LocalTime startTime, LocalDate date) {
+    public Appointment bookAppointment(Long clientId, Long serviceId, Long scheduleId, LocalTime startTime,
+            LocalDate date) {
 
-        SlotId slotId = new SlotId(scheduleId, startTime, date);
-        
-        Slot slot = slotRepo.findById(slotId)
-                .orElseThrow(() -> new IllegalArgumentException("Slot not found"));
+        boolean success = slotRepo.reserveSlot(scheduleId, date, startTime);
 
-        if (slot.getStatus() != Slot.Status.AVAILABLE) {
-            throw new IllegalStateException("Slot is no longer available.");
+        if (!success) {
+            log.warn("Double-booking prevented for Client {} at {} on {}", clientId, startTime, date);
+            throw new IllegalStateException("Sorry, this slot was just taken by another user.");
         }
-
-        slot.setStatus(Slot.Status.BOOKED);
-        slotRepo.save(slot);
-
-        Client client = clientRepo.findById(clientId)
-                .orElseThrow(() -> new IllegalArgumentException("Client not found"));
 
         BarberService service = serviceRepo.findById(serviceId)
                 .orElseThrow(() -> new IllegalArgumentException("Service not found"));
 
-        return appointmentRepo.save(
-                new Appointment(client, slot, service, Appointment.Status.PENDING, service.getPrice()));
+        Appointment appointment = new Appointment();
+        appointment.setClientId(clientId);
+        appointment.setServiceId(serviceId);
+        appointment.setScheduleId(scheduleId);
+        appointment.setSlotStartTime(startTime);
+        appointment.setDate(date);
+        appointment.setStatus(Appointment.Status.PENDING);
+        appointment.setCurrentPrice(service.getPrice());
+
+        log.info("Booking confirmed for Client ID: {} for {}", clientId, startTime);
+        return appointmentRepo.save(appointment);
     }
 }

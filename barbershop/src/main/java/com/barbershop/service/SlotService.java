@@ -22,7 +22,7 @@ public class SlotService {
 
     if (barberId != null) {
         slots = slots.stream()
-            .filter(slot -> slot.getSchedule().getStaff().getPersonId().equals(barberId))
+            .filter(slot -> slot.getScheduleId().equals(barberId))
             .collect(Collectors.toList());
     }
     return slots;
