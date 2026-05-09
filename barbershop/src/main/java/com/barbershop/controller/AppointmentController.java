@@ -6,7 +6,7 @@ import com.barbershop.repository.BarberRepository;
 import com.barbershop.repository.BarberServiceRepository;
 import com.barbershop.service.AppointmentService;
 import com.barbershop.service.SlotService;
-import com.barbershop.service.BookingFacade; 
+import com.barbershop.service.BookingFacade;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -16,7 +16,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +30,10 @@ public class AppointmentController {
     private final BookingFacade bookingFacade;
 
     public AppointmentController(BarberRepository barberRepository,
-                                 BarberServiceRepository serviceRepository,
-                                 SlotService slotService,
-                                 AppointmentService appointmentService,
-                                 BookingFacade bookingFacade) {
+            BarberServiceRepository serviceRepository,
+            SlotService slotService,
+            AppointmentService appointmentService,
+            BookingFacade bookingFacade) {
         this.barberRepository = barberRepository;
         this.serviceRepository = serviceRepository;
         this.slotService = slotService;
@@ -52,11 +51,12 @@ public class AppointmentController {
     public String showSlots(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) Long barberId,
-            @RequestParam(required = false) Long serviceId,
+            @RequestParam(required = false) String serviceType,
+            @RequestParam(required = false) String timeOfDay,
             Model model) {
 
         LocalDate selectedDate = (date == null) ? LocalDate.now() : date;
-        
+
         LocalDate firstDayOfMonth = selectedDate.withDayOfMonth(1);
         int leadingEmptyDays = firstDayOfMonth.getDayOfWeek().getValue() % 7;
         List<LocalDate> daysInMonth = new ArrayList<>();
@@ -68,14 +68,67 @@ public class AppointmentController {
         model.addAttribute("daysInMonth", daysInMonth);
         model.addAttribute("leadingEmptyDays", leadingEmptyDays);
 
-        model.addAttribute("barbers", barberRepository.findAll());
-        model.addAttribute("services", serviceRepository.findAll());
+        List<com.barbershop.model.Barber> allBarbers = new ArrayList<>();
+        barberRepository.findAll().forEach(allBarbers::add);
+        model.addAttribute("allBarbers", allBarbers);
+
+        List<String> allServiceTypes = new ArrayList<>();
+        serviceRepository.findAll().forEach(s -> {
+            if (!allServiceTypes.contains(s.getType())) {
+                allServiceTypes.add(s.getType());
+            }
+        });
+        model.addAttribute("allServiceTypes", allServiceTypes);
 
         model.addAttribute("selectedBarberId", barberId);
-        model.addAttribute("selectedServiceId", serviceId);
+        model.addAttribute("selectedServiceType", serviceType);
+        model.addAttribute("selectedTimeOfDay", timeOfDay);
 
-        List<Slot> availableSlots = slotService.getAvailableSlots(selectedDate, barberId, serviceId);
+        List<Slot> availableSlots = slotService.getAvailableSlots(selectedDate, null, null);
+
+        // barber filter
+        if (barberId != null) {
+            availableSlots = availableSlots.stream()
+                    .filter(s -> {
+                        return s.getSchedule().getStaff().getPersonId().equals(barberId);
+                    })
+                    .toList();
+        }
+
+        // service filter
+        if (serviceType != null && !serviceType.isEmpty()) {
+            availableSlots = availableSlots.stream()
+                    .filter(s -> s.getSchedule().getStaff().getServices().stream()
+                            .anyMatch(svc -> svc.getType().equalsIgnoreCase(serviceType)))
+                    .toList();
+        }
+
+        // time filter
+        if (timeOfDay != null && !timeOfDay.isEmpty()) {
+            availableSlots = availableSlots.stream()
+                    .filter(s -> {
+                        int hour = s.getSlotStartTime().getHour();
+                        return switch (timeOfDay.toLowerCase()) {
+                            case "morning" -> hour < 12;
+                            case "afternoon" -> hour >= 12 && hour < 17;
+                            case "evening" -> hour >= 17;
+                            default -> true;
+                        };
+                    })
+                    .toList();
+        }
+
         model.addAttribute("slots", availableSlots);
+
+        // prices
+        List<java.math.BigDecimal> prices = availableSlots.stream()
+                .flatMap(s -> s.getSchedule().getStaff().getServices().stream())
+                .filter(svc -> serviceType == null || serviceType.isEmpty()
+                        || svc.getType().equalsIgnoreCase(serviceType))
+                .map(com.barbershop.model.BarberService::getPrice)
+                .distinct()
+                .toList();
+        model.addAttribute("prices", prices);
 
         return "appointments/slots";
     }
