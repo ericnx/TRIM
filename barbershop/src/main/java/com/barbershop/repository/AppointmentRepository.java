@@ -41,7 +41,7 @@ public class AppointmentRepository {
                     view.setClientName(rs.getString("client_name"));
                     view.setBarberName(rs.getString("barber_name"));
                     view.setServiceType(rs.getString("service_type"));
-                    view.setDayOfWeek(rs.getDate("slot_date").toLocalDate().getDayOfWeek().name());
+                    view.setDayOfWeek(rs.getDate("date").toLocalDate().getDayOfWeek().name());
                     view.setSlotStartTime(rs.getTime("slot_start_time").toLocalTime());
                     view.setCurrentPrice(rs.getBigDecimal("current_price"));
                     view.setStatus(rs.getString("status"));
@@ -52,7 +52,7 @@ public class AppointmentRepository {
 
     public Appointment save(Appointment appointment) {
         String sql = """
-                INSERT INTO appointment (client_id, service_id, schedule_id, slot_start_time, slot_date, status, current_price)
+                INSERT INTO appointment (client_id, service_id, schedule_id, slot_start_time, date, status, current_price)
                 VALUES (:clientId, :serviceId, :scheduleId, :slotStartTime, :slotDate, :status, :currentPrice)
                 """;
 
